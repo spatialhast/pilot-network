@@ -1,5 +1,6 @@
 <!doctype html>
 <html>
+
 <head>
     <meta charset="utf-8">
     <title>Pilot Network</title>
@@ -9,6 +10,7 @@
     <link href="assets/leaflet.markercluster/MarkerCluster.Default.css" rel="stylesheet" />
 
 </head>
+
 <body>
     <style>
         body {
@@ -34,6 +36,7 @@
 
     <div id="map"></div>
 
+    <script src="assets/jquery-1.11.1.min.js"></script>
     <script src="assets/leaflet-0.7.7/leaflet.js"></script>
     <script src="assets/leaflet.markercluster/leaflet.markercluster.js"></script>
     <script src="assets/tabletop.js"></script>
@@ -70,32 +73,30 @@
                 popupAnchor: [0, -16]
             })
 
-            //https://docs.google.com/spreadsheets/d/12QEiwF0fxUXct_v1gWm2OCwsL7dnrxTXZkyvh3O3jrI/pubhtml  
 
-            Tabletop.init({
-                key: '12QEiwF0fxUXct_v1gWm2OCwsL7dnrxTXZkyvh3O3jrI',
-                callback: function(sheet, tabletop) {
-                    for (var i in sheet) {
-                        var data = sheet[i]; //getting e row from table
-
-                        var content = '<b>name: </b>' + data.name +
-                            '</br>' + '<b>phone: </b>' + '<a href="tel:+18475555555">' + data.phone + '</a>' + '</br>' + '<b>site: </b>' + '<a href=' + data.url + ' target="_blank">' + data.url + '</a>';
-                        var point = L.marker([data.Y, data.X], {
-                            icon: mki,
-                            title: data.name,
-                            riseOnHover: true
-                        }).bindPopup(content);
-                        markerClusters.addLayer(point);
-                        map.addLayer(markerClusters);
-                    }
+            var pilotsLayer = L.geoJson(null, {
+                pointToLayer: function(feature, latlng) {
+                    return L.marker(latlng, {
+                        icon: mki,
+                        title: feature.properties.name,
+                        riseOnHover: true
+                    });
                 },
-                simpleSheet: true
+                onEachFeature: function(feature, layer) {
+                    if (feature.properties) {
+                        var content = '<b>name: </b>' + feature.properties.name +
+                            '</br>' + '<b>phone: </b>' + '<a href="tel:+18475555555">' + feature.properties.phone + '</a>' + '</br>' + '<b>site: </b>' + '<a href=' + feature.properties.url + 'target="_blank">' + feature.properties.url + '</a>';
+                        layer.bindPopup(content);
+                    }
+                }
+            });
+            $.getJSON("data/pilots.geojson", function(data) {
+                pilotsLayer.addData(data);
+                markerClusters.addLayer(pilotsLayer);
+                map.fitBounds(markerClusters);
             });
 
-            map.fitBounds([
-                [48.754402, -68.0119677],
-                [25.6792695, -124.1636729]
-            ]);
+            map.addLayer(markerClusters);
 
             var baseMaps = {
                 "Mapbox Streets": layerMapboxStreets,
@@ -108,4 +109,5 @@
         });
     </script>
 </body>
+
 </html>
